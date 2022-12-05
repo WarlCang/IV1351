@@ -1,7 +1,7 @@
 DROP VIEW IF EXISTS lessons_per_month;
 DROP VIEW IF EXISTS student_siblings;
 DROP VIEW IF EXISTS show_instructors;
-DROP MATERIALIZED VIEW IF EXISTS ensembles_next_week;
+DROP VIEW IF EXISTS ensembles_next_week;
 
 
 -- VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW VIEW
@@ -27,12 +27,12 @@ ORDER BY month;
 -- Show how many students there are with no sibling, with one sibling, with two siblings
 -- expected to be performed a few times per week
 CREATE VIEW student_siblings AS
-SELECT sibs, COUNT(*) AS stus FROM (SELECT COUNT(sibling_id) AS sibs FROM sibling GROUP BY student_id) AS a
-GROUP BY sibs
+SELECT siblings, COUNT(*) AS students FROM (SELECT COUNT(sibling_id) AS siblings FROM sibling GROUP BY student_id) AS a
+GROUP BY siblings
 UNION
 SELECT 0, (SELECT SUM(CASE WHEN id NOT IN (SELECT student_id FROM sibling) THEN 1 ELSE 0 END) AS b)
 FROM student
-ORDER BY sibs;
+ORDER BY siblings;
 
 
 
@@ -50,7 +50,7 @@ ORDER BY COUNT(*) DESC;
 -- List all ensembles held during the next week
 -- sorted by music genre and weekday
 -- For each ensemble tell whether it's full booked, has 1-2 seats left or has more seats left.
-CREATE MATERIALIZED VIEW ensembles_next_week AS
+CREATE VIEW ensembles_next_week AS
 SELECT EXTRACT(dow from bo.date) AS day_of_week, g.genre AS genre, le.booking_id AS booking_id, bo.date, bo.time AS start_time, 
 CASE
     WHEN le.max_number_of_students - COUNT(*) FILTER (WHERE student_id IN (SELECT student_id FROM booked_students)) < 0 THEN 'fully booked'
